@@ -19,4 +19,20 @@ public class UserHandleHidden {
     public UserHandleHidden(int h) {
         throw new RuntimeException();
     }
+
+    public int getIdentifier() {
+        throw new RuntimeException();
+    }
+
+    public static int getUserId(int uid) {
+        throw new RuntimeException();
+    }
+
+    public static int myUserId() {
+        throw new RuntimeException();
+    }
+
+    public static int getCallingUserId() {
+        throw new RuntimeException();
+    }
 }

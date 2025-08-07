@@ -1,12 +1,16 @@
 package android.content.pm;
 
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.IInterface;
 import android.os.RemoteException;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import java.util.List;
@@ -127,6 +131,30 @@ public interface IPackageManager extends IInterface {
 
     @RequiresApi(Build.VERSION_CODES.O)
     PermissionInfo getPermissionInfo(String permissionName, String packageName, int flags)
+            throws RemoteException;
+
+    void replacePreferredActivity(IntentFilter filter, int match, ComponentName[] set, ComponentName activity, int userId)
+            throws RemoteException;
+
+    void installPackageAsUser(String originPath, IPackageInstallObserver2 observer, int flags, String installerPackageName, VerificationParams verificationParams, String packageAbiOverride, int userId)
+            throws RemoteException;
+
+    @RequiresApi(24)
+    void installPackageAsUser(String originPath, IPackageInstallObserver2 observer, int flags, String installerPackageName, int userId)
+            throws RemoteException;
+
+    void deletePackage(String packageName, IPackageDeleteObserver2 observer, int userId, int flags)
+            throws RemoteException;
+
+    void clearApplicationUserData(String packageName, IPackageDataObserver observer, int userId)
+            throws RemoteException;
+
+    @Nullable
+    ComponentName getHomeActivities(@NonNull List<ResolveInfo> outHomeCandidates)
+            throws RemoteException;
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    void setHomeActivity(ComponentName className, int userId)
             throws RemoteException;
 
     abstract class Stub extends Binder implements IPackageManager {

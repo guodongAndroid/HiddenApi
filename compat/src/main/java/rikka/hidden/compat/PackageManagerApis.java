@@ -3,16 +3,23 @@ package rikka.hidden.compat;
 import static rikka.hidden.compat.Services.packageManager;
 
 import android.annotation.SuppressLint;
+import android.content.ComponentName;
+import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.IPackageDataObserver;
+import android.content.pm.IPackageDeleteObserver2;
+import android.content.pm.IPackageInstallObserver2;
 import android.content.pm.IPackageManager;
 import android.content.pm.PackageInfo;
 import android.content.pm.ParceledListSlice;
 import android.content.pm.ProviderInfo;
+import android.content.pm.ResolveInfo;
 import android.os.Build;
 import android.os.RemoteException;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -187,5 +194,83 @@ public class PackageManagerApis {
 
     public int checkUidSignatures(int uid1, int uid2) throws RemoteException {
         return packageManager.get().checkUidSignatures(uid1, uid2);
+    }
+
+    public static void replacePreferredActivity(IntentFilter filter, int match, ComponentName[] set, ComponentName activity, int userId) throws RemoteException {
+        packageManager.get().replacePreferredActivity(filter, match, set, activity, userId);
+    }
+
+    public static void replacePreferredActivityNoThrow(IntentFilter filter, int match, ComponentName[] set, ComponentName activity, int userId) {
+        try {
+            packageManager.get().replacePreferredActivity(filter, match, set, activity, userId);
+        } catch (Throwable ignore) {
+        }
+    }
+
+    @RequiresApi(24)
+    public static void installPackageAsUser(String originPath, IPackageInstallObserver2 observer, int flags, String installerPackageName, int userId)
+            throws RemoteException {
+        packageManager.get().installPackageAsUser(originPath, observer, flags, installerPackageName, userId);
+    }
+
+    @RequiresApi(24)
+    public static void installPackageAsUserNoThrow(String originPath, IPackageInstallObserver2 observer, int flags, String installerPackageName, int userId) {
+        try {
+            packageManager.get().installPackageAsUser(originPath, observer, flags, installerPackageName, userId);
+        } catch (Throwable ignore) {
+        }
+    }
+
+    @RequiresApi(24)
+    public static void deletePackage(String packageName, IPackageDeleteObserver2 observer, int userId, int flags)
+            throws RemoteException {
+        packageManager.get().deletePackage(packageName, observer, userId, flags);
+    }
+
+    @RequiresApi(24)
+    public static void deletePackageNoThrow(String packageName, IPackageDeleteObserver2 observer, int userId, int flags) {
+        try {
+            packageManager.get().deletePackage(packageName, observer, userId, flags);
+        } catch (Throwable ignore) {
+        }
+    }
+
+    public static void clearApplicationUserData(String packageName, IPackageDataObserver observer, int userId) throws RemoteException {
+        packageManager.get().clearApplicationUserData(packageName, observer, userId);
+    }
+
+    public static void clearApplicationUserDataNoThrow(String packageName, IPackageDataObserver observer, int userId) {
+        try {
+            packageManager.get().clearApplicationUserData(packageName, observer, userId);
+        } catch (Throwable ignore) {
+        }
+    }
+
+    @Nullable
+    public static ComponentName getHomeActivities(@NonNull List<ResolveInfo> outHomeCandidates)
+            throws RemoteException {
+        return packageManager.get().getHomeActivities(outHomeCandidates);
+    }
+
+    @Nullable
+    public static ComponentName getHomeActivitiesNoThrow(@NonNull List<ResolveInfo> outHomeCandidates) {
+        try {
+            return packageManager.get().getHomeActivities(outHomeCandidates);
+        } catch (RemoteException ignore) {
+            return null;
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    public static void setHomeActivity(ComponentName className, int userId) throws RemoteException {
+        packageManager.get().setHomeActivity(className, userId);
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    public static void setHomeActivityNoThrow(ComponentName className, int userId) {
+        try {
+            packageManager.get().setHomeActivity(className, userId);
+        } catch (RemoteException ignore) {
+        }
     }
 }

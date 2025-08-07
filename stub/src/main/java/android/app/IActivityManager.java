@@ -1,5 +1,6 @@
 package android.app;
 
+import android.Manifest;
 import android.content.IIntentReceiver;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -11,6 +12,7 @@ import android.os.IInterface;
 import android.os.RemoteException;
 
 import androidx.annotation.RequiresApi;
+import androidx.annotation.RequiresPermission;
 
 import java.util.List;
 
@@ -137,6 +139,10 @@ public interface IActivityManager extends IInterface {
 
     @RequiresApi(Build.VERSION_CODES.P)
     List<ActivityManager.RunningTaskInfo> getTasks(int maxNum)
+            throws RemoteException;
+
+    @RequiresPermission(Manifest.permission.KILL_BACKGROUND_PROCESSES)
+    void killBackgroundProcesses(String packageName, int userId)
             throws RemoteException;
 
     @RequiresApi(26)

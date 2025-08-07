@@ -220,4 +220,8 @@ public class ActivityManagerApis {
     public static void unregisterReceiver(IIntentReceiver receiver) throws RemoteException {
         activityManager.get().unregisterReceiver(receiver);
     }
+
+    public static void killBackgroundProcesses(@NonNull String packageName, int userId) throws RemoteException {
+        activityManager.get().killBackgroundProcesses(packageName, userId);
+    }
 }

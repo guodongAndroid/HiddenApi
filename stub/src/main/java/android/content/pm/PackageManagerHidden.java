@@ -12,6 +12,10 @@ public class PackageManagerHidden {
     public static int MATCH_UNINSTALLED_PACKAGES;
     public static int INSTALL_REPLACE_EXISTING;
     public static int INSTALL_ALLOW_TEST;
+    public static int INSTALL_DONT_KILL_APP;
+    public static int INSTALL_SUCCEEDED;
+    public static int DELETE_ALL_USERS;
+    public static int DELETE_SUCCEEDED;
 
     @RequiresApi(34)
     public static int INSTALL_BYPASS_LOW_TARGET_SDK_BLOCK;
