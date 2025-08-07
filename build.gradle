@@ -1,8 +1,15 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
     ext {
-        version_name = '4.3.3'
+        version_name = '1.0.0'
     }
+}
+
+plugins {
+    id("com.android.application") version "8.10.0" apply false
+    id("com.android.library") version "8.10.0" apply false
+    id("dev.rikka.tools.refine") version "4.4.0" apply false
+    id("com.vanniktech.maven.publish") version "0.34.0" apply false
 }
 
 allprojects {
@@ -15,7 +22,7 @@ allprojects {
 
 subprojects {
     afterEvaluate { project ->
-        if (!plugins.hasPlugin('maven-publish')) {
+        if (!plugins.hasPlugin('com.vanniktech.maven.publish')) {
             return
         }
 
@@ -24,79 +31,51 @@ subprojects {
         } else {
             group = "${groupIdBase}.${project.parent.name}"
         }
+
         version = version_name
-        println("${project.displayName}: ${group}:${project.name}:${version}")
+        println("${project.displayName}: ${group}:hidden-${project.name}:${version}")
+
+        mavenPublishing {
+
+            publishToMavenCentral(true)
+            signAllPublications()
+
+            coordinates(project.group, "hidden-${project.name}", project.version)
+
+            pom {
+                name = POM_NAME
+                description = POM_DESCRIPTION
+                inceptionYear = POM_INCEPTION_YEAR
+                url = POM_URL
+
+                licenses {
+                    license {
+                        name = POM_LICENCE_NAME
+                        url = POM_LICENCE_URL
+                    }
+                }
+
+                developers {
+                    developer {
+                        name = POM_DEVELOPER_NAME
+                        url = POM_DEVELOPER_URL
+                    }
+                }
+
+                scm {
+                    url = POM_SCM_URL
+                    connection = POM_SCM_CONNECTION
+                    developerConnection = POM_SCM_DEV_CONNECTION
+                }
+            }
+        }
 
         publishing {
-            publications {
-                mavenJava(MavenPublication) {
-                    group project.group
-                    artifactId project.name
-                    version version_name
-                    afterEvaluate {
-                        from components.release
-                    }
-                    pom {
-                        name = POM_NAME
-                        description = POM_DESCRIPTION
-                        url = POM_URL
-                        licenses {
-                            license {
-                                name = POM_LICENCE_NAME
-                                url = POM_LICENCE_URL
-                            }
-                        }
-                        developers {
-                            developer {
-                                name = POM_DEVELOPER_NAME
-                                url = POM_DEVELOPER_URL
-                            }
-                        }
-                        scm {
-                            connection = POM_SCM_CONNECTION
-                            url = POM_SCM_URL
-                        }
-                    }
-                }
-            }
             repositories {
                 maven {
-                    name 'ossrh'
-                    url 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/'
-                    credentials(PasswordCredentials)
+                    name 'Local'
+                    url rootProject.uri("repo")
                 }
-            }
-        }
-    }
-
-    afterEvaluate {
-        if (!plugins.hasPlugin('signing')) {
-            return
-        }
-
-        android {
-            publishing {
-                singleVariant("release") {
-                    withSourcesJar()
-                    withJavadocJar()
-                }
-            }
-        }
-
-        signing {
-            def signingKey = findProperty("signingKey")
-            def signingPassword = findProperty("signingPassword")
-            def secretKeyRingFile = findProperty("signing.secretKeyRingFile")
-            def gnuPgDir = new File(System.getProperty("user.home") + "/.gnupg/private-keys-v1.d")
-
-            if (gnuPgDir.isDirectory() && gnuPgDir.list().length > 0) {
-                useGpgCmd()
-                sign publishing.publications
-            } else if (secretKeyRingFile != null && file(secretKeyRingFile).exists()) {
-                sign publishing.publications
-            } else if (signingKey != null) {
-                useInMemoryPgpKeys(signingKey, signingPassword)
-                sign publishing.publications
             }
         }
     }
@@ -107,21 +86,21 @@ task clean(type: Delete) {
 }
 
 ext {
-    groupIdBase = "dev.rikka.hidden"
+    groupIdBase = "com.sunxiaodou.android"
 
-    POM_INCEPTION_YEAR = "2022"
+    POM_INCEPTION_YEAR = "2025"
     POM_PACKAGING = "aar"
 
-    POM_URL = "https://github.com/RikkaW/HiddenApi"
-    POM_SCM_URL = "https://github.com/RikkaW/HiddenApi"
-    POM_SCM_CONNECTION = "scm:git@github.com:RikkaW/HiddenApi.git"
-    POM_SCM_DEV_CONNECTION = "scm:git@github.com:RikkaW/HiddenApi.git"
+    POM_URL = "https://github.com/guodongAndroid/HiddenApi"
+    POM_SCM_URL = "https://github.com/guodongAndroid/HiddenApi"
+    POM_SCM_CONNECTION = "scm:git@github.com:guodongAndroid/HiddenApi.git"
+    POM_SCM_DEV_CONNECTION = "scm:git@github.com:guodongAndroid/HiddenApi.git"
 
     POM_LICENCE_NAME = "MIT License"
-    POM_LICENCE_URL = "https://github.com/RikkaW/HiddenApi/blob/master/LICENSE"
+    POM_LICENCE_URL = "https://github.com/guodongAndroid/HiddenApi/blob/master/LICENSE"
     POM_LICENCE_DIST = "repo"
 
-    POM_DEVELOPER_ID = "rikka"
-    POM_DEVELOPER_NAME = "Rikka"
-    POM_DEVELOPER_URL = "https://github.com/RikkaW"
+    POM_DEVELOPER_ID = "guodongAndroid"
+    POM_DEVELOPER_NAME = "guodongAndroid"
+    POM_DEVELOPER_URL = "https://github.com/guodongAndroid"
 }
