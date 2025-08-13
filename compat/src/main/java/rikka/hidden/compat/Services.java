@@ -5,6 +5,8 @@ import android.app.IActivityManager;
 import android.content.pm.ILauncherApps;
 import android.content.pm.IPackageManager;
 import android.hardware.display.IDisplayManager;
+import android.net.IConnectivityManager;
+import android.net.IEthernetManager;
 import android.os.Build;
 import android.os.IBatteryPropertiesRegistrar;
 import android.os.IDeviceIdleController;
@@ -28,6 +30,8 @@ class Services {
     protected static final SystemServiceBinder<IBatteryPropertiesRegistrar> batteryPropertiesRegistrar;
     protected static final SystemServiceBinder<ILauncherApps> launcherApps;
     protected static final SystemServiceBinder<IWindowManager> windowManager;
+    protected static final SystemServiceBinder<IEthernetManager> ethernetManager;
+    protected static final SystemServiceBinder<IConnectivityManager> connectivityManager;
 
     static {
         appOps = new SystemServiceBinder<>(
@@ -72,5 +76,11 @@ class Services {
 
         windowManager = new SystemServiceBinder<>(
                 "window", IWindowManager.Stub::asInterface);
+
+        ethernetManager = new SystemServiceBinder<>(
+                "ethernet", IEthernetManager.Stub::asInterface);
+
+        connectivityManager = new SystemServiceBinder<>(
+                "connectivity", IConnectivityManager.Stub::asInterface);
     }
 }
