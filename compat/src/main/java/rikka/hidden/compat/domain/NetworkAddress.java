@@ -4,6 +4,9 @@ import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
 /**
  * Created by guodongAndroid on 2025/8/12
  */
@@ -63,6 +66,7 @@ public class NetworkAddress {
         return dns2;
     }
 
+    @Retention(RetentionPolicy.SOURCE)
     @IntDef({IpAssignment.STATIC, IpAssignment.DHCP, IpAssignment.UNASSIGNED})
     public @interface IpAssignment {
         int STATIC = 1;

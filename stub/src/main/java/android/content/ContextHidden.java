@@ -28,4 +28,9 @@ public class ContextHidden {
             throws PackageManager.NameNotFoundException {
         throw new RuntimeException();
     }
+
+    // Android10之前是隐藏方法
+    public String getOpPackageName() {
+        throw new RuntimeException();
+    }
 }

@@ -2,6 +2,7 @@ package rikka.hidden.compat;
 
 import android.app.ActivityManagerNative;
 import android.app.IActivityManager;
+import android.content.Context;
 import android.content.pm.ILauncherApps;
 import android.content.pm.IPackageManager;
 import android.hardware.display.IDisplayManager;
@@ -10,6 +11,7 @@ import android.net.IEthernetManager;
 import android.os.Build;
 import android.os.IBatteryPropertiesRegistrar;
 import android.os.IDeviceIdleController;
+import android.os.IPowerManager;
 import android.os.IUserManager;
 import android.permission.IPermissionManager;
 import android.view.IWindowManager;
@@ -19,7 +21,6 @@ import com.android.internal.app.IAppOpsService;
 import rikka.hidden.compat.util.SystemServiceBinder;
 
 class Services {
-
     protected static final SystemServiceBinder<IAppOpsService> appOps;
     protected static final SystemServiceBinder<IActivityManager> activityManager;
     protected static final SystemServiceBinder<IUserManager> userManager;
@@ -32,6 +33,7 @@ class Services {
     protected static final SystemServiceBinder<IWindowManager> windowManager;
     protected static final SystemServiceBinder<IEthernetManager> ethernetManager;
     protected static final SystemServiceBinder<IConnectivityManager> connectivityManager;
+    protected static final SystemServiceBinder<IPowerManager> powerManager;
 
     static {
         appOps = new SystemServiceBinder<>(
@@ -81,6 +83,8 @@ class Services {
                 "ethernet", IEthernetManager.Stub::asInterface);
 
         connectivityManager = new SystemServiceBinder<>(
-                "connectivity", IConnectivityManager.Stub::asInterface);
+                Context.CONNECTIVITY_SERVICE, IConnectivityManager.Stub::asInterface);
+
+        powerManager = new SystemServiceBinder<>(Context.POWER_SERVICE, IPowerManager.Stub::asInterface);
     }
 }

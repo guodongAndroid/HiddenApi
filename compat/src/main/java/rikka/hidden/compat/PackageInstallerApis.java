@@ -3,13 +3,13 @@ package rikka.hidden.compat;
 import static rikka.hidden.compat.Services.packageManager;
 
 import android.Manifest;
-import android.content.Context;
-import android.content.ContextHidden;
+import android.app.ActivityThread;
 import android.content.IIntentReceiver;
 import android.content.IIntentSender;
 import android.content.Intent;
 import android.content.IntentSenderHidden;
 import android.content.pm.IPackageDeleteObserver2;
+import android.content.pm.IPackageInstaller;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageInstallerHidden;
 import android.content.pm.PackageManager;
@@ -30,7 +30,6 @@ import androidx.annotation.RequiresPermission;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.OutputStream;
 
 import dev.rikka.tools.refine.Refine;
@@ -46,7 +45,7 @@ public class PackageInstallerApis {
 
     private static final String TAG = "PackageInstallerApis";
 
-    public static void installPackage(@NonNull Context context, @NonNull String apkFilePath, @NonNull IPackageInstallObserver observer)
+    public static void installPackage(@NonNull String apkFilePath, @NonNull IPackageInstallObserver observer)
             throws RemoteException {
         File apkFile = new File(apkFilePath);
         if (!apkFile.exists()) {
@@ -55,64 +54,44 @@ public class PackageInstallerApis {
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            installPackageApi28(context, observer, apkFile);
+            installPackageApi28(observer, apkFile);
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            installPackageApi24(context, observer, apkFile);
+            installPackageApi24(observer, apkFile);
         } else {
-            installPackageApiLegacy(context, observer, apkFile);
+            installPackageApiLegacy(observer, apkFile);
         }
     }
 
-    public static void installPackageNoThrow(@NonNull Context context, @NonNull String apkFilePath, @NonNull IPackageInstallObserver observer) throws RemoteException {
-        File apkFile = new File(apkFilePath);
-        if (!apkFile.exists()) {
-            observer.onPackageInstalled("", false, -1, apkFilePath + " 文件不存在", null);
-            return;
-        }
-
+    public static void installPackageNoThrow(@NonNull String apkFilePath, @NonNull IPackageInstallObserver observer) {
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                installPackageApi28(context, observer, apkFile);
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                installPackageApi24(context, observer, apkFile);
-            } else {
-                installPackageApiLegacy(context, observer, apkFile);
-            }
-        } catch (RemoteException e) {
-            observer.onPackageInstalled("", false, -1, e.getMessage(), null);
+            installPackage(apkFilePath, observer);
+        } catch (RemoteException ignore) {
         }
     }
 
     @RequiresPermission(anyOf = {Manifest.permission.REQUEST_DELETE_PACKAGES, Manifest.permission.DELETE_PACKAGES})
-    public static void uninstallPackage(@NonNull Context context, @NonNull String packageName, @NonNull IPackageDeleteObserver observer) throws RemoteException {
+    public static void uninstallPackage(@NonNull String packageName, @NonNull IPackageDeleteObserver observer) throws RemoteException {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            uninstallPackageApi34(context, packageName, observer);
+            uninstallPackageApi34(packageName, observer);
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            uninstallPackageApi28(context, packageName, observer);
+            uninstallPackageApi28(packageName, observer);
         } else {
-            uninstallPackageApiLegacy(context, packageName, observer);
+            uninstallPackageApiLegacy(packageName, observer);
         }
     }
 
-    public static void uninstallPackageNoThrow(@NonNull Context context, @NonNull String packageName, @NonNull IPackageDeleteObserver observer) throws RemoteException {
+    public static void uninstallPackageNoThrow(@NonNull String packageName, @NonNull IPackageDeleteObserver observer) {
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                uninstallPackageApi34(context, packageName, observer);
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                uninstallPackageApi28(context, packageName, observer);
-            } else {
-                uninstallPackageApiLegacy(context, packageName, observer);
-            }
-        } catch (RemoteException e) {
-            observer.onPackageDeleted(packageName, false, -1, e.getMessage(), null);
+            uninstallPackage(packageName, observer);
+        } catch (RemoteException ignore) {
         }
     }
 
-    private static void uninstallPackageApiLegacy(@NonNull Context context, @NonNull String packageName, @NonNull IPackageDeleteObserver observer) throws RemoteException {
-        int userId = UserHandleHidden.getCallingUserId();
+    private static void uninstallPackageApiLegacy(@NonNull String packageName, @NonNull IPackageDeleteObserver observer) throws RemoteException {
+        int userId = UserHandleHidden.myUserId();
         packageManager.get().deletePackage(packageName, new IPackageDeleteObserver2.Stub() {
             @Override
-            public void onPackageDeleted(String basePackageName, int returnCode, String msg) throws RemoteException {
+            public void onPackageDeleted(String basePackageName, int returnCode, String msg) {
                 boolean isSuccessful = returnCode == PackageManagerHidden.DELETE_SUCCEEDED;
                 observer.onPackageDeleted(packageName, isSuccessful, returnCode, msg, null);
             }
@@ -120,53 +99,57 @@ public class PackageInstallerApis {
     }
 
     @RequiresApi(Build.VERSION_CODES.P)
-    private static void uninstallPackageApi28(@NonNull Context context, @NonNull String packageName, @NonNull IPackageDeleteObserver observer) {
-        new Thread(() -> {
-            PackageInstaller installer = context.getPackageManager().getPackageInstaller();
-            IIntentSender senderAdapter = new IntentSenderAdapter() {
-                @Override
-                public void send(int code, Intent intent, String resolvedType, IBinder whitelistToken, IIntentReceiver finishedReceiver, String requiredPermission, Bundle options) throws RemoteException {
-                    int status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE);
-                    boolean isSuccessful = status == PackageInstaller.STATUS_SUCCESS;
-                    String message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
-                    Bundle extras = intent.getExtras();
-                    observer.onPackageDeleted(packageName, isSuccessful, status, message, extras);
-                }
-            };
+    private static void uninstallPackageApi28(@NonNull String packageName, @NonNull IPackageDeleteObserver observer) throws RemoteException {
+        IPackageInstaller installer = packageManager.get().getPackageInstaller();
 
-            IntentSenderHidden sender = getIntentSenderHidden(senderAdapter);
-            installer.uninstall(packageName, Refine.unsafeCast(sender));
-        }).start();
+        //noinspection ExtractMethodRecommender
+        IIntentSender senderAdapter = new IntentSenderAdapter() {
+            @Override
+            public void send(int code, Intent intent, String resolvedType, IBinder whitelistToken, IIntentReceiver finishedReceiver, String requiredPermission, Bundle options) {
+                int status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE);
+                boolean isSuccessful = status == PackageInstaller.STATUS_SUCCESS;
+                String message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
+                Bundle extras = intent.getExtras();
+                observer.onPackageDeleted(packageName, isSuccessful, status, message, extras);
+            }
+        };
+
+        IntentSenderHidden sender = new IntentSenderHidden(senderAdapter);
+        String callerPackageName;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            callerPackageName = ActivityThread.systemMain().getSystemContext().getOpPackageName();
+        } else {
+            callerPackageName = ActivityThread.systemMain().getSystemContext().getPackageName();
+        }
+        installer.uninstall(new VersionedPackage(packageName, PackageManager.VERSION_CODE_HIGHEST), callerPackageName, 0, Refine.unsafeCast(sender), UserHandleHidden.myUserId());
     }
 
     @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-    private static void uninstallPackageApi34(@NonNull Context context, @NonNull String packageName, @NonNull IPackageDeleteObserver observer) {
-        new Thread(() -> {
-            PackageInstaller installer = context.getPackageManager().getPackageInstaller();
-            IIntentSender senderAdapter = new IntentSenderAdapter() {
-                @Override
-                public void send(int code, Intent intent, String resolvedType, IBinder whitelistToken, IIntentReceiver finishedReceiver, String requiredPermission, Bundle options) throws RemoteException {
-                    int status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE);
-                    boolean isSuccessful = status == PackageInstaller.STATUS_SUCCESS;
-                    String message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
-                    Bundle extras = intent.getExtras();
-                    observer.onPackageDeleted(packageName, isSuccessful, status, message, extras);
-                }
-            };
+    private static void uninstallPackageApi34(@NonNull String packageName, @NonNull IPackageDeleteObserver observer) throws RemoteException {
+        IPackageInstaller installer = packageManager.get().getPackageInstaller();
+        IIntentSender senderAdapter = new IntentSenderAdapter() {
+            @Override
+            public void send(int code, Intent intent, String resolvedType, IBinder whitelistToken, IIntentReceiver finishedReceiver, String requiredPermission, Bundle options) {
+                int status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE);
+                boolean isSuccessful = status == PackageInstaller.STATUS_SUCCESS;
+                String message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
+                Bundle extras = intent.getExtras();
+                observer.onPackageDeleted(packageName, isSuccessful, status, message, extras);
+            }
+        };
 
-            IntentSenderHidden sender = getIntentSenderHidden(senderAdapter);
-            installer.uninstall(new VersionedPackage(packageName, PackageManager.VERSION_CODE_HIGHEST), PackageManagerHidden.DELETE_ALL_USERS, Refine.unsafeCast(sender));
-        }).start();
+        IntentSenderHidden sender = new IntentSenderHidden(senderAdapter);
+        installer.uninstall(new VersionedPackage(packageName, PackageManager.VERSION_CODE_HIGHEST), ActivityThread.systemMain().getSystemContext().getOpPackageName(), 0, Refine.unsafeCast(sender), UserHandleHidden.myUserId());
     }
 
-    private static void installPackageApiLegacy(@NonNull Context context, @NonNull IPackageInstallObserver observer, File apkFile) throws RemoteException {
+    private static void installPackageApiLegacy(@NonNull IPackageInstallObserver observer, File apkFile) throws RemoteException {
         Uri packageUri = Uri.fromFile(apkFile);
         int userId = UserHandleHidden.getCallingUserId();
         //noinspection InstantiationOfUtilityClass
         VerificationParams params = new VerificationParams(null, null, null, VerificationParams.NO_UID, null);
         packageManager.get().installPackageAsUser(packageUri.getPath(), new PackageInstallObserver2Adapter() {
             @Override
-            public void onPackageInstalled(String basePackageName, int returnCode, String msg, Bundle extras) throws RemoteException {
+            public void onPackageInstalled(String basePackageName, int returnCode, String msg, Bundle extras) {
                 boolean isSuccessful = returnCode == PackageManagerHidden.INSTALL_SUCCEEDED;
                 observer.onPackageInstalled(
                         basePackageName,
@@ -176,16 +159,15 @@ public class PackageInstallerApis {
                         extras
                 );
             }
-        }, PackageManagerHidden.INSTALL_REPLACE_EXISTING | PackageManagerHidden.INSTALL_DONT_KILL_APP, context.getPackageName(), params, null, userId);
+        }, PackageManagerHidden.INSTALL_REPLACE_EXISTING | PackageManagerHidden.INSTALL_DONT_KILL_APP, ActivityThread.systemMain().getSystemContext().getPackageName(), params, null, userId);
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    private static void installPackageApi24(@NonNull Context context, @NonNull IPackageInstallObserver observer, File apkFile) throws RemoteException {
+    private static void installPackageApi24(@NonNull IPackageInstallObserver observer, File apkFile) throws RemoteException {
         Uri packageUri = Uri.fromFile(apkFile);
-        int userId = Refine.<ContextHidden>unsafeCast(context).getUserId();
         packageManager.get().installPackageAsUser(packageUri.getPath(), new PackageInstallObserver2Adapter() {
             @Override
-            public void onPackageInstalled(String basePackageName, int returnCode, String msg, Bundle extras) throws RemoteException {
+            public void onPackageInstalled(String basePackageName, int returnCode, String msg, Bundle extras) {
                 boolean isSuccessful = returnCode == PackageManagerHidden.INSTALL_SUCCEEDED;
                 observer.onPackageInstalled(
                         basePackageName,
@@ -195,13 +177,13 @@ public class PackageInstallerApis {
                         extras
                 );
             }
-        }, PackageManagerHidden.INSTALL_REPLACE_EXISTING | PackageManagerHidden.INSTALL_DONT_KILL_APP, context.getPackageName(), userId);
+        }, PackageManagerHidden.INSTALL_REPLACE_EXISTING | PackageManagerHidden.INSTALL_DONT_KILL_APP, ActivityThread.systemMain().getSystemContext().getPackageName(), UserHandleHidden.myUserId());
     }
 
     @RequiresApi(Build.VERSION_CODES.P)
-    private static void installPackageApi28(@NonNull Context context, @NonNull IPackageInstallObserver observer, File apkFile) throws RemoteException {
+    private static void installPackageApi28(@NonNull IPackageInstallObserver observer, File apkFile) {
         new Thread(() -> {
-            PackageInstaller installer = context.getPackageManager().getPackageInstaller();
+            PackageInstaller installer = ActivityThread.systemMain().getSystemContext().getPackageManager().getPackageInstaller();
             PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -227,9 +209,10 @@ public class PackageInstallerApis {
                 os.close();
                 session.close();
 
+                //noinspection ExtractMethodRecommender
                 IIntentSender senderAdapter = new IntentSenderAdapter() {
                     @Override
-                    public void send(int code, Intent intent, String resolvedType, IBinder whitelistToken, IIntentReceiver finishedReceiver, String requiredPermission, Bundle options) throws RemoteException {
+                    public void send(int code, Intent intent, String resolvedType, IBinder whitelistToken, IIntentReceiver finishedReceiver, String requiredPermission, Bundle options) {
                         String packageName = intent.getStringExtra(PackageInstaller.EXTRA_PACKAGE_NAME);
                         int status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE);
                         boolean isSuccessful = status == PackageInstaller.STATUS_SUCCESS;
@@ -241,17 +224,12 @@ public class PackageInstallerApis {
                     }
                 };
 
-                IntentSenderHidden sender = getIntentSenderHidden(senderAdapter);
+                IntentSenderHidden sender = new IntentSenderHidden(senderAdapter);
                 session.commit(Refine.unsafeCast(sender));
-            } catch (IOException e) {
+            } catch (Exception e) {
                 Log.d(TAG, "installPackage: 创建或打开Session失败");
                 observer.onPackageInstalled("", false, -1, e.getMessage(), null);
             }
         }).start();
-    }
-
-    @NonNull
-    private static IntentSenderHidden getIntentSenderHidden(@NonNull IIntentSender sender) {
-        return new IntentSenderHidden(sender);
     }
 }
