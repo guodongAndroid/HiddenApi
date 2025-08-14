@@ -70,7 +70,7 @@ public class LauncherApis {
         IPackageManager manager = packageManager.get();
         int userId = Refine.<ContextHidden>unsafeCast(context).getUserId();
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             manager.setHomeActivity(launchComponentName, userId);
         } else {
             IntentFilter homeFilter = new IntentFilter(Intent.ACTION_MAIN);
