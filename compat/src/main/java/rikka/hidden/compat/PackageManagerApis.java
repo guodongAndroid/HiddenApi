@@ -217,7 +217,12 @@ public class PackageManagerApis {
     public static void installPackageAsUserNoThrow(String originPath, IPackageInstallObserver2 observer, int flags, String installerPackageName, int userId) {
         try {
             packageManager.get().installPackageAsUser(originPath, observer, flags, installerPackageName, userId);
-        } catch (Throwable ignore) {
+        } catch (Throwable e) {
+            try {
+                observer.onPackageInstalled("", -1, e.getMessage(), null);
+            } catch (RemoteException ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 
@@ -231,7 +236,12 @@ public class PackageManagerApis {
     public static void deletePackageNoThrow(String packageName, IPackageDeleteObserver2 observer, int userId, int flags) {
         try {
             packageManager.get().deletePackage(packageName, observer, userId, flags);
-        } catch (Throwable ignore) {
+        } catch (Throwable e) {
+            try {
+                observer.onPackageDeleted(packageName, -1, e.getMessage());
+            } catch (RemoteException ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 
@@ -242,7 +252,12 @@ public class PackageManagerApis {
     public static void clearApplicationUserDataNoThrow(String packageName, IPackageDataObserver observer, int userId) {
         try {
             packageManager.get().clearApplicationUserData(packageName, observer, userId);
-        } catch (Throwable ignore) {
+        } catch (Throwable e) {
+            try {
+                observer.onRemoveCompleted(packageName, false);
+            } catch (RemoteException ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 
@@ -256,7 +271,7 @@ public class PackageManagerApis {
     public static ComponentName getHomeActivitiesNoThrow(@NonNull List<ResolveInfo> outHomeCandidates) {
         try {
             return packageManager.get().getHomeActivities(outHomeCandidates);
-        } catch (RemoteException ignore) {
+        } catch (Throwable ignore) {
             return null;
         }
     }
@@ -270,7 +285,7 @@ public class PackageManagerApis {
     public static void setHomeActivityNoThrow(ComponentName className, int userId) {
         try {
             packageManager.get().setHomeActivity(className, userId);
-        } catch (RemoteException ignore) {
+        } catch (Throwable ignore) {
         }
     }
 }

@@ -3,6 +3,7 @@ package rikka.hidden.compat;
 import android.app.ActivityManagerNative;
 import android.app.IActivityManager;
 import android.app.IAlarmManager;
+import android.app.IUiModeManager;
 import android.content.Context;
 import android.content.pm.ILauncherApps;
 import android.content.pm.IPackageManager;
@@ -36,6 +37,7 @@ class Services {
     protected static final SystemServiceBinder<IConnectivityManager> connectivityManager;
     protected static final SystemServiceBinder<IPowerManager> powerManager;
     protected static final SystemServiceBinder<IAlarmManager> alarmManager;
+    protected static final SystemServiceBinder<IUiModeManager> uiModeManager;
 
     static {
         appOps = new SystemServiceBinder<>(
@@ -90,5 +92,7 @@ class Services {
         powerManager = new SystemServiceBinder<>(Context.POWER_SERVICE, IPowerManager.Stub::asInterface);
 
         alarmManager = new SystemServiceBinder<>(Context.ALARM_SERVICE, IAlarmManager.Stub::asInterface);
+
+        uiModeManager = new SystemServiceBinder<>(Context.UI_MODE_SERVICE, IUiModeManager.Stub::asInterface);
     }
 }

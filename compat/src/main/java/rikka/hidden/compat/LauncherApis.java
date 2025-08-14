@@ -44,7 +44,7 @@ public class LauncherApis {
         List<ResolveInfo> resolveInfos = new ArrayList<>();
         try {
             return packageManager.get().getHomeActivities(resolveInfos);
-        } catch (RemoteException e) {
+        } catch (Throwable ignore) {
             return null;
         }
     }
@@ -96,7 +96,7 @@ public class LauncherApis {
     public static boolean setLauncherNoThrow(@NonNull Context context, @NonNull String packageName) {
         try {
             return setLauncher(context, packageName);
-        } catch (RemoteException | PackageManager.NameNotFoundException e) {
+        } catch (Throwable ignore) {
             return false;
         }
     }

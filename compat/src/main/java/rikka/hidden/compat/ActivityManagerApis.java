@@ -224,4 +224,11 @@ public class ActivityManagerApis {
     public static void killBackgroundProcesses(@NonNull String packageName, int userId) throws RemoteException {
         activityManager.get().killBackgroundProcesses(packageName, userId);
     }
+
+    public static void killBackgroundProcessesNoThrow(@NonNull String packageName, int userId){
+        try {
+            killBackgroundProcesses(packageName, userId);
+        } catch (Throwable ignore) {
+        }
+    }
 }

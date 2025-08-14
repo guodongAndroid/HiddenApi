@@ -22,7 +22,7 @@ public class AlarmManagerApis {
     public static boolean setTimeNoThrow(long millis) {
         try {
             return setTime(millis);
-        } catch (RemoteException | SecurityException e) {
+        } catch (Throwable ignore) {
             return false;
         }
     }
@@ -37,7 +37,7 @@ public class AlarmManagerApis {
     public static boolean setTimeZoneNoThrow(@NonNull String timeZone) {
         try {
             return setTimeZone(timeZone);
-        } catch (RemoteException | SecurityException e) {
+        } catch (Throwable ignore) {
             return false;
         }
     }

@@ -65,7 +65,8 @@ public class PackageInstallerApis {
     public static void installPackageNoThrow(@NonNull String apkFilePath, @NonNull IPackageInstallObserver observer) {
         try {
             installPackage(apkFilePath, observer);
-        } catch (RemoteException ignore) {
+        } catch (Throwable e) {
+            observer.onPackageInstalled("", false, -1, e.getMessage(), null);
         }
     }
 
@@ -83,7 +84,8 @@ public class PackageInstallerApis {
     public static void uninstallPackageNoThrow(@NonNull String packageName, @NonNull IPackageDeleteObserver observer) {
         try {
             uninstallPackage(packageName, observer);
-        } catch (RemoteException ignore) {
+        } catch (Throwable e) {
+            observer.onPackageDeleted(packageName, false, -1, e.getMessage(), null);
         }
     }
 
@@ -117,9 +119,9 @@ public class PackageInstallerApis {
         IntentSenderHidden sender = new IntentSenderHidden(senderAdapter);
         String callerPackageName;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            callerPackageName = ActivityThread.systemMain().getSystemContext().getOpPackageName();
+            callerPackageName = ActivityThread.currentApplication().getOpPackageName();
         } else {
-            callerPackageName = ActivityThread.systemMain().getSystemContext().getPackageName();
+            callerPackageName = ActivityThread.currentApplication().getPackageName();
         }
         installer.uninstall(new VersionedPackage(packageName, PackageManager.VERSION_CODE_HIGHEST), callerPackageName, 0, Refine.unsafeCast(sender), UserHandleHidden.myUserId());
     }
@@ -139,7 +141,7 @@ public class PackageInstallerApis {
         };
 
         IntentSenderHidden sender = new IntentSenderHidden(senderAdapter);
-        installer.uninstall(new VersionedPackage(packageName, PackageManager.VERSION_CODE_HIGHEST), ActivityThread.systemMain().getSystemContext().getOpPackageName(), 0, Refine.unsafeCast(sender), UserHandleHidden.myUserId());
+        installer.uninstall(new VersionedPackage(packageName, PackageManager.VERSION_CODE_HIGHEST), ActivityThread.currentApplication().getOpPackageName(), 0, Refine.unsafeCast(sender), UserHandleHidden.myUserId());
     }
 
     private static void installPackageApiLegacy(@NonNull IPackageInstallObserver observer, File apkFile) throws RemoteException {
@@ -152,14 +154,14 @@ public class PackageInstallerApis {
             public void onPackageInstalled(String basePackageName, int returnCode, String msg, Bundle extras) {
                 boolean isSuccessful = returnCode == PackageManagerHidden.INSTALL_SUCCEEDED;
                 observer.onPackageInstalled(
-                        basePackageName,
+                        basePackageName == null ? "" : basePackageName,
                         isSuccessful,
                         returnCode,
                         msg,
                         extras
                 );
             }
-        }, PackageManagerHidden.INSTALL_REPLACE_EXISTING | PackageManagerHidden.INSTALL_DONT_KILL_APP, ActivityThread.systemMain().getSystemContext().getPackageName(), params, null, userId);
+        }, PackageManagerHidden.INSTALL_REPLACE_EXISTING | PackageManagerHidden.INSTALL_DONT_KILL_APP, ActivityThread.currentApplication().getPackageName(), params, null, userId);
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -170,20 +172,20 @@ public class PackageInstallerApis {
             public void onPackageInstalled(String basePackageName, int returnCode, String msg, Bundle extras) {
                 boolean isSuccessful = returnCode == PackageManagerHidden.INSTALL_SUCCEEDED;
                 observer.onPackageInstalled(
-                        basePackageName,
+                        basePackageName == null ? "" : basePackageName,
                         isSuccessful,
                         returnCode,
                         msg,
                         extras
                 );
             }
-        }, PackageManagerHidden.INSTALL_REPLACE_EXISTING | PackageManagerHidden.INSTALL_DONT_KILL_APP, ActivityThread.systemMain().getSystemContext().getPackageName(), UserHandleHidden.myUserId());
+        }, PackageManagerHidden.INSTALL_REPLACE_EXISTING | PackageManagerHidden.INSTALL_DONT_KILL_APP, ActivityThread.currentApplication().getPackageName(), UserHandleHidden.myUserId());
     }
 
     @RequiresApi(Build.VERSION_CODES.P)
     private static void installPackageApi28(@NonNull IPackageInstallObserver observer, File apkFile) {
         new Thread(() -> {
-            PackageInstaller installer = ActivityThread.systemMain().getSystemContext().getPackageManager().getPackageInstaller();
+            PackageInstaller installer = ActivityThread.currentApplication().getPackageManager().getPackageInstaller();
             PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {

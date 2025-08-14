@@ -21,7 +21,7 @@ public class PowerManagerApis {
 
     public static void wakeUp(long time) throws RemoteException {
         IPowerManager manager = powerManager.get();
-        Context context = ActivityThread.systemMain().getSystemContext();
+        Context context = ActivityThread.currentApplication();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             manager.wakeUp(time, PowerManagerHidden.WAKE_REASON_UNKNOWN, "wakeUp", context.getOpPackageName());
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -34,7 +34,7 @@ public class PowerManagerApis {
     public static void wakeUpNoThrow(long time) {
         try {
             wakeUp(time);
-        } catch (RemoteException ignore) {
+        } catch (Throwable ignore) {
         }
     }
 
@@ -45,34 +45,34 @@ public class PowerManagerApis {
     public static void goToSleepNoThrow(long time) {
         try {
             goToSleep(time);
-        } catch (RemoteException ignore) {
+        } catch (Throwable ignore) {
         }
     }
 
     public static void reboot(@Nullable String reason) throws RemoteException {
-        powerManager.get().reboot(false, reason, true);
+        powerManager.get().reboot(false, reason, false);
     }
 
     public static void rebootNoThrow(@Nullable String reason) {
         try {
             reboot(reason);
-        } catch (RemoteException ignore) {
+        } catch (Throwable ignore) {
         }
     }
 
     public static void shutdown(@Nullable String reason) throws RemoteException {
         IPowerManager manager = powerManager.get();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            manager.shutdown(false, reason, true);
+            manager.shutdown(false, reason, false);
         } else {
-            manager.shutdown(false, true);
+            manager.shutdown(false, false);
         }
     }
 
     public static void shutdownNoThrow(@Nullable String reason) {
         try {
             shutdown(reason);
-        } catch (RemoteException ignore) {
+        } catch (Throwable ignore) {
         }
     }
 }

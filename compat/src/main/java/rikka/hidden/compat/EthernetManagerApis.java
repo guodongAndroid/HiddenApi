@@ -4,7 +4,7 @@ import static rikka.hidden.compat.Services.connectivityManager;
 import static rikka.hidden.compat.Services.ethernetManager;
 
 import android.app.ActivityThread;
-import android.app.ContextImpl;
+import android.content.Context;
 import android.net.EthernetNetworkUpdateRequest;
 import android.net.IConnectivityManager;
 import android.net.IEthernetManager;
@@ -96,7 +96,7 @@ public class EthernetManagerApis {
     public static void addListenerNoThrow(IEthernetServiceListener listener) {
         try {
             ethernetManager.get().addListener(listener);
-        } catch (RemoteException ignore) {
+        } catch (Throwable ignore) {
         }
     }
 
@@ -109,7 +109,7 @@ public class EthernetManagerApis {
     public static void removeListenerNoThrow(IEthernetServiceListener listener) {
         try {
             ethernetManager.get().removeListener(listener);
-        } catch (RemoteException ignore) {
+        } catch (Throwable ignore) {
         }
     }
 
@@ -162,7 +162,7 @@ public class EthernetManagerApis {
     public static void setStaticAddressNoThrow(@NonNull String ipAddress, @NonNull String netmask, @NonNull String gateway, @NonNull String dns1, @Nullable String dns2) {
         try {
             setStaticAddress(ipAddress, netmask, gateway, dns1, dns2);
-        } catch (RemoteException ignore) {
+        } catch (Throwable ignore) {
         }
     }
 
@@ -215,7 +215,7 @@ public class EthernetManagerApis {
     public static void setStaticAddressNoThrow(@NonNull String iface, @NonNull String ipAddress, @NonNull String netmask, @NonNull String gateway, @NonNull String dns1, @Nullable String dns2) {
         try {
             setStaticAddress(iface, ipAddress, netmask, gateway, dns1, dns2);
-        } catch (RemoteException ignore) {
+        } catch (Throwable ignore) {
         }
     }
 
@@ -247,7 +247,7 @@ public class EthernetManagerApis {
     public static void setDhcpAddressNoThrow() {
         try {
             setDhcpAddress();
-        } catch (RemoteException ignore) {
+        } catch (Throwable ignore) {
         }
     }
 
@@ -279,7 +279,7 @@ public class EthernetManagerApis {
     public static void setDhcpAddressNoThrow(@NonNull String iface) {
         try {
             setDhcpAddress(iface);
-        } catch (RemoteException ignore) {
+        } catch (Throwable ignore) {
         }
     }
 
@@ -397,7 +397,7 @@ public class EthernetManagerApis {
     public static void setEthernetEnabledNoThrow(boolean enabled) {
         try {
             setEthernetEnabled(enabled);
-        } catch (RemoteException ignore) {
+        } catch (Throwable ignore) {
         }
     }
 
@@ -412,7 +412,7 @@ public class EthernetManagerApis {
                                                   INetworkInterfaceOutcomeReceiver listener) {
         try {
             updateConfiguration(iface, request, listener);
-        } catch (RemoteException ignore) {
+        } catch (Throwable ignore) {
         }
     }
 
@@ -426,7 +426,7 @@ public class EthernetManagerApis {
     public static void connectNetworkNoThrow(@NonNull String iface, INetworkInterfaceOutcomeReceiver listener) {
         try {
             connectNetwork(iface, listener);
-        } catch (RemoteException ignore) {
+        } catch (Throwable ignore) {
         }
     }
 
@@ -440,7 +440,7 @@ public class EthernetManagerApis {
     public static void disconnectNetworkNoThrow(@NonNull String iface, INetworkInterfaceOutcomeReceiver listener) {
         try {
             disconnectNetwork(iface, listener);
-        } catch (RemoteException ignore) {
+        } catch (Throwable ignore) {
         }
     }
 
@@ -468,7 +468,7 @@ public class EthernetManagerApis {
     public static void enableInterfaceNoThrow(@NonNull String iface, INetworkInterfaceOutcomeReceiver listener) {
         try {
             enableInterface(iface, listener);
-        } catch (RemoteException ignore) {
+        } catch (Throwable ignore) {
         }
     }
 
@@ -482,7 +482,7 @@ public class EthernetManagerApis {
     public static void disableInterfaceNoThrow(@NonNull String iface, INetworkInterfaceOutcomeReceiver listener) {
         try {
             disableInterface(iface, listener);
-        } catch (RemoteException ignore) {
+        } catch (Throwable ignore) {
         }
     }
 
@@ -556,10 +556,10 @@ public class EthernetManagerApis {
         for (Network network : networks) {
             NetworkCapabilities capabilities;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                ContextImpl context = ActivityThread.systemMain().getSystemContext();
+                Context context = ActivityThread.currentApplication();
                 capabilities = manager.getNetworkCapabilities(network, context.getOpPackageName(), context.getAttributionTag());
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                ContextImpl context = ActivityThread.systemMain().getSystemContext();
+                Context context = ActivityThread.currentApplication();
                 capabilities = manager.getNetworkCapabilities(network, context.getOpPackageName());
             } else {
                 capabilities = manager.getNetworkCapabilities(network);
