@@ -1,3 +1,5 @@
+import com.vanniktech.maven.publish.AndroidSingleVariantLibrary
+
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
     ext {
@@ -36,6 +38,7 @@ subprojects {
         println("${project.displayName}: ${group}:hidden-${project.name}:${version}")
 
         mavenPublishing {
+            configure(new AndroidSingleVariantLibrary("release", true, true))
 
             publishToMavenCentral(true)
             signAllPublications()

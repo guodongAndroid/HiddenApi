@@ -4,6 +4,8 @@ import android.os.Build;
 import android.os.IBinder;
 import android.view.SurfaceControlHidden;
 
+import com.android.server.display.DisplayControl;
+
 /**
  * Created by guodongAndroid on 2025/8/8
  */
@@ -12,8 +14,7 @@ public class SurfaceControlApis {
     public static void setDisplayPowerMode(int mode) {
         IBinder displayToken;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            // Java层无法获取到displayToken
-            return;
+            displayToken = DisplayControl.getPhysicalDisplayToken(SurfaceControlHidden.BUILT_IN_DISPLAY_ID_MAIN);
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             displayToken = SurfaceControlHidden.getInternalDisplayToken();
         } else {
