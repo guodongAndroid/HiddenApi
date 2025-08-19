@@ -1,14 +1,14 @@
 # Hidden API
 
-![Maven Central](https://img.shields.io/maven-central/v/dev.rikka.hidden/stub)
+![Maven Central](https://img.shields.io/maven-central/v/com.sunxiaodou.android/hidden-stub)
 
 Unify all hidden APIs used by Rikka apps into a library.
 
 ## Usage
 
 - Setup [HiddenApiRefinePlugin](https://github.com/RikkaApps/HiddenApiRefinePlugin)
-- `implementation 'dev.rikka.hidden:compat:<version>'`
-- `compileOnly 'dev.rikka.hidden:stub:<version>'`
+- `implementation 'com.sunxiaodou.android:hidden-compat:<version>'`
+- `compileOnly 'com.sunxiaodou.android:hidden-stub:<version>'`
 
 ## Changelog
 

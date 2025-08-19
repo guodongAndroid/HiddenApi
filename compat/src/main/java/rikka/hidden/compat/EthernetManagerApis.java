@@ -2,6 +2,7 @@ package rikka.hidden.compat;
 
 import static rikka.hidden.compat.Services.connectivityManager;
 import static rikka.hidden.compat.Services.ethernetManager;
+import static rikka.hidden.compat.Services.networkManagementService;
 
 import android.app.ActivityThread;
 import android.content.Context;
@@ -10,6 +11,7 @@ import android.net.IConnectivityManager;
 import android.net.IEthernetManager;
 import android.net.IEthernetServiceListener;
 import android.net.INetworkInterfaceOutcomeReceiver;
+import android.net.InterfaceConfiguration;
 import android.net.IpConfiguration;
 import android.net.IpConfigurationHidden;
 import android.net.LinkAddress;
@@ -364,6 +366,15 @@ public class EthernetManagerApis {
 
     @Nullable
     public static String getMacAddress(@NonNull String iface) {
+        try {
+            InterfaceConfiguration ifcg = networkManagementService.get().getInterfaceConfig(iface);
+            String address = ifcg.getHardwareAddress();
+            if (!TextUtils.isEmpty(address)) {
+                return address;
+            }
+        } catch (Throwable ignore) {
+        }
+
         File file = new File("/sys/class/net/" + iface + "/address");
         if (!file.exists()) {
             return null;
@@ -388,16 +399,40 @@ public class EthernetManagerApis {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     public static void setEthernetEnabled(boolean enabled) throws RemoteException {
-        ethernetManager.get().setEthernetEnabled(enabled);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ethernetManager.get().setEthernetEnabled(enabled);
+        } else {
+            String[] ifaces = getAvailableInterfaces();
+            for (String iface : ifaces) {
+                setInterfaceEnabled(iface, enabled, null);
+            }
+        }
     }
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     public static void setEthernetEnabledNoThrow(boolean enabled) {
         try {
             setEthernetEnabled(enabled);
         } catch (Throwable ignore) {
+        }
+    }
+
+    public static boolean isEthernetEnabled() throws RemoteException {
+        String[] ifaces = getAvailableInterfaces();
+        for (String iface : ifaces) {
+            boolean enabled = isInterfaceEnabled(iface);
+            if (!enabled) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean isEthernetEnabledNoThrow() {
+        try {
+            return isEthernetEnabled();
+        } catch (Throwable e) {
+            return false;
         }
     }
 
@@ -417,34 +452,6 @@ public class EthernetManagerApis {
     }
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    public static void connectNetwork(@NonNull String iface, INetworkInterfaceOutcomeReceiver listener)
-            throws RemoteException {
-        ethernetManager.get().connectNetwork(iface, listener);
-    }
-
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    public static void connectNetworkNoThrow(@NonNull String iface, INetworkInterfaceOutcomeReceiver listener) {
-        try {
-            connectNetwork(iface, listener);
-        } catch (Throwable ignore) {
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    public static void disconnectNetwork(@NonNull String iface, INetworkInterfaceOutcomeReceiver listener)
-            throws RemoteException {
-        ethernetManager.get().disconnectNetwork(iface, listener);
-    }
-
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    public static void disconnectNetworkNoThrow(@NonNull String iface, INetworkInterfaceOutcomeReceiver listener) {
-        try {
-            disconnectNetwork(iface, listener);
-        } catch (Throwable ignore) {
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     public static List<String> getInterfaceList() throws RemoteException {
         return ethernetManager.get().getInterfaceList();
     }
@@ -458,31 +465,63 @@ public class EthernetManagerApis {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-    public static void enableInterface(@NonNull String iface, INetworkInterfaceOutcomeReceiver listener)
+    public static void setInterfaceEnabled(@NonNull String iface, boolean enabled, @Nullable INetworkInterfaceOutcomeReceiver listener)
             throws RemoteException {
-        ethernetManager.get().enableInterface(iface, listener);
+        if (enabled) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                ethernetManager.get().enableInterface(iface, listener);
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                ethernetManager.get().connectNetwork(iface, listener);
+            } else {
+                networkManagementService.get().setInterfaceUp(iface);
+            }
+        } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                ethernetManager.get().disableInterface(iface, listener);
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                ethernetManager.get().disconnectNetwork(iface, listener);
+            } else {
+                networkManagementService.get().setInterfaceDown(iface);
+            }
+        }
     }
 
-    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-    public static void enableInterfaceNoThrow(@NonNull String iface, INetworkInterfaceOutcomeReceiver listener) {
+    public static void setInterfaceEnabledNoThrow(@NonNull String iface, boolean enabled, @Nullable INetworkInterfaceOutcomeReceiver listener) {
         try {
-            enableInterface(iface, listener);
+            setInterfaceEnabled(iface, enabled, listener);
         } catch (Throwable ignore) {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-    public static void disableInterface(@NonNull String iface, INetworkInterfaceOutcomeReceiver listener)
+    public static boolean isInterfaceEnabled(@NonNull String iface)
             throws RemoteException {
-        ethernetManager.get().disableInterface(iface, listener);
+        InterfaceConfiguration ifcg = networkManagementService.get().getInterfaceConfig(iface);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            return ifcg.isUp();
+        }
+
+        return ifcg.hasFlag(InterfaceConfiguration.FLAG_UP);
     }
 
-    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-    public static void disableInterfaceNoThrow(@NonNull String iface, INetworkInterfaceOutcomeReceiver listener) {
+    public static boolean isInterfaceEnabledNoThrow(@NonNull String iface) {
         try {
-            disableInterface(iface, listener);
+            return isInterfaceEnabled(iface);
         } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
+    public static boolean isInterfaceActive(@NonNull String iface)
+            throws RemoteException {
+        InterfaceConfiguration ifcg = networkManagementService.get().getInterfaceConfig(iface);
+        return ifcg.isActive();
+    }
+
+    public static boolean isInterfaceActiveNoThrow(@NonNull String iface) {
+        try {
+            return isInterfaceActive(iface);
+        } catch (Throwable ignore) {
+            return false;
         }
     }
 

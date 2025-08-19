@@ -10,6 +10,7 @@ import android.content.pm.IPackageManager;
 import android.hardware.display.IDisplayManager;
 import android.net.IConnectivityManager;
 import android.net.IEthernetManager;
+import android.os.INetworkManagementService;
 import android.os.Build;
 import android.os.IBatteryPropertiesRegistrar;
 import android.os.IDeviceIdleController;
@@ -38,6 +39,7 @@ class Services {
     protected static final SystemServiceBinder<IPowerManager> powerManager;
     protected static final SystemServiceBinder<IAlarmManager> alarmManager;
     protected static final SystemServiceBinder<IUiModeManager> uiModeManager;
+    protected static final SystemServiceBinder<INetworkManagementService> networkManagementService;
 
     static {
         appOps = new SystemServiceBinder<>(
@@ -94,5 +96,7 @@ class Services {
         alarmManager = new SystemServiceBinder<>(Context.ALARM_SERVICE, IAlarmManager.Stub::asInterface);
 
         uiModeManager = new SystemServiceBinder<>(Context.UI_MODE_SERVICE, IUiModeManager.Stub::asInterface);
+
+        networkManagementService = new SystemServiceBinder<>("network_management", INetworkManagementService.Stub::asInterface);
     }
 }
