@@ -28,7 +28,7 @@ subprojects {
             group = "${groupIdBase}.${project.parent.name}"
         }
 
-        version = "1.0.1"
+        version = "1.0.2-SNAPSHOT"
         println("${project.displayName}: ${group}:hidden-${project.name}:${version}")
 
         mavenPublishing {
