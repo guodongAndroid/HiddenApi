@@ -1,5 +1,6 @@
 package rikka.hidden.compat;
 
+import android.app.ActivityThread;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -22,14 +23,15 @@ public class FactoryResetApis {
     /**
      * @noinspection deprecation
      */
-    public static void factoryReset(Context context, boolean isWipeExternalStorage) {
+    public static void factoryReset(boolean isWipeExternalStorage) {
+        Context context = ActivityThread.currentApplication();
         Thread thread = new Thread("Factory Reset") {
             @Override
             public void run() {
                 try {
                     RecoverySystem.rebootWipeUserData(context);
                 } catch (Throwable e) {
-                    Log.e(TAG, "Can't perform master clear/factory reset", e);
+                    Log.e(TAG, "Can't perform master clear/factory reset: " + e.getMessage(), e);
                 }
             }
         };
