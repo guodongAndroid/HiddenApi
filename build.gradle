@@ -30,7 +30,7 @@ subprojects {
 
         def versionName = "hidden-${project.name}"
 
-        version = "1.0.2"
+        version = "1.0.3-SNAPSHOT"
         println("${project.displayName}: ${group}:${versionName}:${version}")
 
         mavenPublishing {
