@@ -30,13 +30,13 @@ subprojects {
 
         def versionName = "hidden-${project.name}"
 
-        version = "1.0.2-SNAPSHOT"
+        version = "1.0.2"
         println("${project.displayName}: ${group}:${versionName}:${version}")
 
         mavenPublishing {
             configure(new AndroidSingleVariantLibrary("release", true, true))
 
-            publishToMavenCentral(false)
+            publishToMavenCentral(true)
             signAllPublications()
 
             coordinates(project.group, versionName, project.version)
