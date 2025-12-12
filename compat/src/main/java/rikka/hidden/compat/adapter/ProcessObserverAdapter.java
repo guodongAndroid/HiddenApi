@@ -1,7 +1,10 @@
 package rikka.hidden.compat.adapter;
 
 import android.app.IProcessObserver;
+import android.os.Build;
 import android.os.RemoteException;
+
+import androidx.annotation.RequiresApi;
 
 public class ProcessObserverAdapter extends IProcessObserver.Stub {
 
@@ -15,10 +18,12 @@ public class ProcessObserverAdapter extends IProcessObserver.Stub {
         // no longer exists from API 26
     }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     public void onForegroundServicesChanged(int pid, int uid, int serviceTypes) throws RemoteException {
         // from Q beta 3
     }
 
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     public void onProcessStarted(int pid, int processUid, int packageUid, String packageName, String processName) throws RemoteException {
         // from android-14.0.0_r50
     }

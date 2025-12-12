@@ -5,15 +5,18 @@ pluginManagement {
         mavenLocal()
     }
 }
+
 plugins {
-    id("com.android.settings") version "8.10.1"
+    id("com.android.settings") version "8.13.2"
 }
+
 android {
     compileSdk = 36
     minSdk = 21
     targetSdk = 36
     buildToolsVersion = "36.0.0"
 }
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -24,11 +27,20 @@ dependencyResolutionManagement {
     versionCatalogs {
         libs {
             version('refine', '4.4.0')
+            version('annotation', '1.9.1')
+            version('buildcompat', '34.0.1')
+            version('parcelablelist', '2.0.1')
+
             library('refine-runtime', 'dev.rikka.tools.refine', 'runtime').versionRef('refine')
             library('refine-annotation', 'dev.rikka.tools.refine', 'annotation').versionRef('refine')
             library('refine-annotation-processor', 'dev.rikka.tools.refine', 'annotation-processor').versionRef('refine')
+
+            library('androidx-annotation', 'androidx.annotation', 'annotation').versionRef('annotation')
+            library('buildcompat', 'dev.rikka.rikkax.buildcompat', 'buildcompat').versionRef('buildcompat')
+            library('parcelablelist', 'dev.rikka.rikkax.parcelablelist', 'parcelablelist').versionRef('parcelablelist')
         }
     }
 }
+
 include ':stub'
 include ':compat'

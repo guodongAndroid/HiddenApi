@@ -25,9 +25,11 @@ dependencies {
     implementation libs.refine.annotation
     implementation libs.refine.runtime
 
-    compileOnly 'androidx.annotation:annotation:1.3.0'
-    implementation 'dev.rikka.rikkax.buildcompat:buildcompat:34.0.1'
-    implementation 'dev.rikka.rikkax.parcelablelist:parcelablelist:2.0.1'
+    compileOnly libs.androidx.annotation
+    implementation(libs.buildcompat) {
+        exclude group: 'androidx.annotation', module: 'annotation'
+    }
+    implementation libs.parcelablelist
 
     compileOnly project(':stub')
 }
